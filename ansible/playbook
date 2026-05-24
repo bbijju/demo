@@ -1,0 +1,20 @@
+- name: Инвентаризация машин HQ-SRV и HQ-CLI
+  hosts: HQ-SRV, HQ-CLI
+  gather_facts: yes
+  
+  tasks:
+    - name: Создать директорию для отчетов
+      file:
+        path: /etc/ansible/PC-INFO
+        state: directory
+        mode: 0755
+      delegate_to: localhost
+      run_once: yes
+    
+    - name: получение данных с хоста
+      copy:
+        dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml
+        content: |
+          Hostname: {{ ansible_hostname }}
+          IP_Address: {{ ansible_default_ipv4.address }}
+      delegate_to: localhost
