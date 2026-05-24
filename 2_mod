@@ -1,0 +1,50 @@
+RAID
+apt install -y mdadm
+mdadm -C /dev/md0 -l 0 -n 2 /dev/sdb /dev/sdc
+cat /proc/mdstat
+mdadm --detail --scan >> /etc/mdadm/mdadm.conf
+update-initramfs -u
+mkfs.ext4 -L raid0 /dev/md0
+mkdir -p /raid
+В файле /etc/fstab в конец добавляем
+/dev/md0 /raid ext4 defaults 0 0
+mount -a
+systemctl daemon-reload
+
+NFS
+На сервере
+apt install nfs-kernel-server -ymkdir -p /raid/nfschmod 777 /raid/nfsВ файл /etc/exports
+/raid/nfs 192.168.1.16/28(rw,no_root_squash,no_subtree_check)
+exportfs -ra
+systemctl enable nfs-kernel-server
+На клиенте
+apt install nfs-common -y
+mkdir -p /mnt/nfs
+chmod 777 /mnt/nfs
+В файле /etc/fstab
+192.168.1.2:/raid/nfs /mnt/nfs nfs defaults 0 0
+mount -a
+
+CHRONY
+apt install chrony
+На ISP в файле /etc/chrony/chrony.conf
+#pool 2.debian.pool.ntp.org iburst
+local stratum 5
+hwtimestamp *
+allow 0/0
+На клиентах в том же файле:
+#pool 2.debian.pool.ntp.org iburst
+server 172.16.1.1 iburst prefer
+systemctl restart chrony
+chronyc tracking
+
+ТРАНСЛЯЦИЯ ПОРТОВ
+На BR-RTR пишем:
+iptables -t nat -A PREROUTING -i ens33 -p tcp --dport 8080 -j DNAT --to 192.168.2.2:8080
+На HQ-RTR пишем:
+iptables -t nat -A PREROUTING -i ens33 -p tcp --dport 8080 -j DNAT --to 192.168.1.2:80
+На роутерах пишем, но меняем соответственно адреса:
+iptables -t nat -A PREROUTING -i ens33 -p tcp --dport 2026 -j DNAT --to 192.168.2.2:2026
+iptables -A FORWARD -d 192.168.2.2 -p tcp --dport 8080 -j ACCEPT
+iptables -A FORWARD -d 192.168.2.2 -p tcp --dport 2026 -j ACCEPT
+iptables-save > /etc/iptables/rules.v4
