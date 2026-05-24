@@ -1,0 +1,8 @@
+zone "au-team.irpo" {
+type master;
+file "/etc/bind/db.au-team.irpo";
+};
+zone "1.168.192.in-addr.arpa" {
+type master;
+file "/etc/bind/db.192.168.1";
+};
