@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  testapp:
+    image: site:latest
+    container_name: testapp
+    ports:
+      - "8080:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=testdb
+      - DB_TYPE=maria
+      - DB_USER=test
+      - DB_PASS=P@ssw0rd
+      - SERVER_PORT=8080
+    restart: unless-stopped
+  db:
+    image: mariadb:10.11
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootP@ssw0rd
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: P@ssw0rd
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+volumes:
+  db_data:
