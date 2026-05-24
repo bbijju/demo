@@ -1,0 +1,10 @@
+services:
+  zabbix-agent:
+    image: zabbix/zabbix-agent:alpine-7.2-latest
+    container_name: zabbix-agent
+    privileged: true
+    environment:
+      ZBX_SERVER_HOST: 192.168.1.2
+      ZBX_HOSTNAME: BR-SRV
+    network_mode: host
+    restart: unless-stopped
